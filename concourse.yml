@@ -10,8 +10,8 @@ resources:
 - name: build-image
   type: docker-image
   source:
-    repository: golang:alpine
-    tag: latest
+    repository: golang
+    tag: alpine
     registry_mirror: https://((registry-mirror-domain))
       # e.g. https://registry.docker.example.com:5000
     ca_certs:
@@ -22,7 +22,7 @@ resources:
 - name: base-image
   type: docker-image
   source:
-    repository: alpine:latest
+    repository: alpine
     tag: latest
     registry_mirror: https://((registry-mirror-domain))
       # e.g. https://registry.docker.example.com:5000
