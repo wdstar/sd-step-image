@@ -1,0 +1,84 @@
+---
+# Concourse pipeline: sd-step-image
+#   $ fly -t target sp -p sd-step-image -c concourse.yml -l fly-vars.yml -l ~/sec/credentials-prod.yml
+resources:
+- name: src-git
+  type: git
+  source:
+    uri: https://github.com/wdstar/((name))-image
+    branch: master
+- name: build-image
+  type: docker-image
+  source:
+    repository: golang:alpine
+    tag: latest
+    registry_mirror: https://((registry-mirror-domain))
+      # e.g. https://registry.docker.example.com:5000
+    ca_certs:
+    - domain: ((registry-mirror-domain))
+      # e.g. registry.docker.example.com:5000
+      cert: ((docker-reg-ca-cert))
+  check_every: 1h
+- name: base-image
+  type: docker-image
+  source:
+    repository: alpine:latest
+    tag: latest
+    registry_mirror: https://((registry-mirror-domain))
+      # e.g. https://registry.docker.example.com:5000
+    ca_certs:
+    - domain: ((registry-mirror-domain))
+      # e.g. registry.docker.example.com:5000
+      cert: ((docker-reg-ca-cert))
+  check_every: 1h
+- name: docker-reg
+  type: docker-image
+  source:
+    repository: ((docker-id))/((name))
+    #repository: gitlab.io.example.com:5050/base/images/((name))
+    tag: 0.0.0
+    username: ((docker-id))
+    password: ((docker-pw))
+    #ca_certs:
+    #  - domain: gitlab.io.example.com:5050
+    #    cert: ((docker-reg-ca-cert))
+  check_every: 12h
+
+jobs:
+- name: build-img
+  plan:
+  - aggregate:
+    - get: src-git
+      params:
+        depth: 5
+      trigger: false
+    - get: build-image
+      #params:
+      #  skip_download: true  # default: false
+      trigger: true
+    - get: base-image
+      #params:
+      #  skip_download: true  # default: false
+      trigger: true
+  - put: docker-reg
+    params:
+      build: src-git
+      #tag: sd-step/ver
+      tag_as_latest: true  # default: false
+    get_params:
+      skip_download: true  # default: false
+- name: test-img
+  plan:
+  - get: docker-reg
+    trigger: true
+  - task: echo-ver
+    image: docker-reg
+    config:
+      platform: linux
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          sd-step -v
+          exit 0

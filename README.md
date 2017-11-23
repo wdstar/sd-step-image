@@ -5,6 +5,20 @@ sd-step Docker image
 
 This image is alpine + sd-step + hab.
 
+## Local build
+
+```
+$ git clone git@github.com:wdstar/sd-step-image.git
+$ cd sd-step-image
+$ docker-compose build
+$ docker-compose up -d
+$ docker-compose exec this-image sh
+/ # sd-step exec core/git 'git --version'
+git version 2.14.2
+/ # exit
+$ docker-compose down
+```
+
 ## License and Authors
 
 - Author:: wdstar at github.com

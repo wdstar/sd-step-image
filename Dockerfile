@@ -1,5 +1,4 @@
-FROM golang:alpine
-
+FROM golang:alpine AS build-env
 ARG VERSION
 RUN apk --update add git && \
     apk add --virtual build-deps curl musl-dev gcc && \
@@ -15,3 +14,10 @@ RUN apk --update add git && \
     rm -rf hab-* && \
     apk del build-deps && \
     rm -rf /var/cache/apk/*
+
+FROM alpine
+RUN apk --update add git && \
+    mkdir -p /opt/sd/bin/ && \
+    rm -rf /var/cache/apk/*
+COPY --from=build-env /usr/local/bin/sd-step /usr/local/bin/
+COPY --from=build-env /opt/sd/bin/hab /opt/sd/bin/
